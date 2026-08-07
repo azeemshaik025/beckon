@@ -4,19 +4,19 @@
 //! with one async method per endpoint, a matching trait for mocking, and a typed
 //! error enum.
 //!
-//! ```ignore
+//! ```
 //! use beckon::beckon;
 //! use serde::{Deserialize, Serialize};
 //!
 //! #[derive(Serialize, Deserialize)]
-//! struct User {
-//!     id: u32,
-//!     name: String,
+//! pub struct User {
+//!     pub id: u32,
+//!     pub name: String,
 //! }
 //!
 //! #[derive(Serialize)]
-//! struct UserPath {
-//!     id: u32,
+//! pub struct UserPath {
+//!     pub id: u32,
 //! }
 //!
 //! beckon!(
@@ -36,9 +36,13 @@
 //!     }
 //! );
 //!
-//! // let client = UserApi::new(reqwest::Url::parse("https://api.example.com")?, Some(30));
-//! // let users = client.get_users().await?;
-//! // let user = client.get_users_by_id(&UserPath { id: 1 }).await?;
+//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+//! let client = UserApi::new(reqwest::Url::parse("https://api.example.com")?, Some(30));
+//! let _users = client.get_users().await?;
+//! let _user = client.get_users_by_id(&UserPath { id: 1 }).await?;
+//! # Ok(())
+//! # }
+//! # fn main() {}
 //! ```
 
 extern crate proc_macro;

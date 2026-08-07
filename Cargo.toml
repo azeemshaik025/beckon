@@ -1,6 +1,6 @@
 [package]
 name = "beckon"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Azeem Shaik <azeemshaik025@gmail.com>"]
 description = "Generate type-safe, async HTTP clients from endpoint definitions — a Rust proc macro."
