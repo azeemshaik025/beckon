@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct Post {
+pub struct Post {
     id: u32,
     title: String,
     content: String,
@@ -17,7 +17,7 @@ struct Post {
 
 // Path parameters struct - fields must match all `{param}` placeholders in the path
 #[derive(Serialize)]
-struct UserPostPathParams {
+pub struct UserPostPathParams {
     user_id: u32,
     post_id: u32,
 }
@@ -46,7 +46,7 @@ beckon!(
 );
 
 #[derive(Serialize)]
-struct CommentReplyPathParams {
+pub struct CommentReplyPathParams {
     id: u32,
     comment_id: u32,
     reply_id: u32,

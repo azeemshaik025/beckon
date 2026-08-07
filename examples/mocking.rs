@@ -10,14 +10,14 @@ use serde::{Deserialize, Serialize};
 // Response type
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct User {
+pub struct User {
     id: u32,
     name: String,
 }
 
 // Path parameters
 #[derive(Serialize)]
-struct UserPathParams {
+pub struct UserPathParams {
     id: u32,
 }
 
@@ -35,7 +35,7 @@ beckon!(
 );
 
 // Mock client implementing the generated trait
-struct MockProvider;
+pub struct MockProvider;
 
 impl ApiClientTrait for MockProvider {
     async fn get_users_by_id(&self, path_params: &UserPathParams) -> Result<User, ApiClientError> {

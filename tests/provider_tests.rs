@@ -48,22 +48,22 @@ mod tests {
 
     // Test data structures
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    struct MyResponse {
+    pub struct MyResponse {
         value: String,
     }
 
     #[derive(Serialize, Deserialize)]
-    struct MyRequest {
+    pub struct MyRequest {
         data: String,
     }
 
     #[derive(Serialize, Deserialize)]
-    struct PathParams {
+    pub struct PathParams {
         id: String,
     }
 
     #[derive(Serialize, Deserialize)]
-    struct QueryParams {
+    pub struct QueryParams {
         q: String,
     }
 
@@ -220,7 +220,7 @@ mod tests {
             }
         );
 
-        struct MockProvider;
+        pub struct MockProvider;
 
         impl SimpleProviderTrait for MockProvider {
             async fn get_items(&self) -> Result<MyResponse, SimpleProviderError> {
@@ -317,7 +317,7 @@ mod tests {
     #[tokio::test]
     async fn test_multiple_path_params() -> Result<(), Box<dyn std::error::Error>> {
         #[derive(Serialize, Deserialize)]
-        struct MultiPathParams {
+        pub struct MultiPathParams {
             user_id: String,
             post_id: String,
         }

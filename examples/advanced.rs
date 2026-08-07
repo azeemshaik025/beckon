@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 // Response types
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct User {
+pub struct User {
     id: u32,
     name: String,
     email: String,
@@ -24,40 +24,40 @@ struct User {
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct CreateUserResponse {
+pub struct CreateUserResponse {
     id: u32,
     message: String,
 }
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct SearchResults {
+pub struct SearchResults {
     results: Vec<User>,
     total: u32,
 }
 
 // Request body types
 #[derive(Serialize)]
-struct CreateUserRequest {
+pub struct CreateUserRequest {
     name: String,
     email: String,
 }
 
 #[derive(Serialize)]
-struct UpdateUserRequest {
+pub struct UpdateUserRequest {
     name: Option<String>,
     email: Option<String>,
 }
 
 // Path parameters
 #[derive(Serialize)]
-struct UserPathParams {
+pub struct UserPathParams {
     id: u32,
 }
 
 // Query parameters
 #[derive(Serialize)]
-struct SearchQueryParams {
+pub struct SearchQueryParams {
     q: String,
     limit: Option<u32>,
 }

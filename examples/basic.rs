@@ -9,14 +9,14 @@ use serde::Deserialize;
 
 // Define your response types
 #[derive(Deserialize, Debug)]
-struct User {
+pub struct User {
     id: u32,
     name: String,
     email: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct Post {
+pub struct Post {
     id: u32,
     title: String,
     content: String,
