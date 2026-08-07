@@ -1,7 +1,11 @@
-//! Generate HTTP client methods from endpoint definitions.
+//! Generate type-safe, async HTTP clients from endpoint definitions.
+//!
+//! `beckon!` takes a client name and a list of endpoints and expands to a struct
+//! with one async method per endpoint, a matching trait for mocking, and a typed
+//! error enum.
 //!
 //! ```ignore
-//! use http_provider_macro::api_client;
+//! use beckon::beckon;
 //! use serde::{Deserialize, Serialize};
 //!
 //! #[derive(Serialize, Deserialize)]
@@ -10,7 +14,12 @@
 //!     name: String,
 //! }
 //!
-//! api_client!(
+//! #[derive(Serialize)]
+//! struct UserPath {
+//!     id: u32,
+//! }
+//!
+//! beckon!(
 //!     UserApi,
 //!     {
 //!         {
@@ -27,15 +36,9 @@
 //!     }
 //! );
 //!
-//! #[derive(Serialize)]
-//! struct UserPath {
-//!     id: u32,
-//! }
-//!
-//! // Usage
-//! let client = UserApi::new(reqwest::Url::parse("https://api.example.com")?, Some(30));
-//! let users = client.get_users().await?;
-//! let user = client.get_users_by_id(&UserPath { id: 1 }).await?;
+//! // let client = UserApi::new(reqwest::Url::parse("https://api.example.com")?, Some(30));
+//! // let users = client.get_users().await?;
+//! // let user = client.get_users_by_id(&UserPath { id: 1 }).await?;
 //! ```
 
 extern crate proc_macro;
@@ -56,12 +59,11 @@ fn expand_macro(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     }
 }
 
+/// Generate a type-safe, async HTTP client from endpoint definitions.
+///
+/// See the [crate-level docs](crate) for the full endpoint grammar and features
+/// (auth, retries, path/query params, headers, custom method names).
 #[proc_macro]
-pub fn api_client(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    expand_macro(input)
-}
-
-#[proc_macro]
-pub fn http_provider(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn beckon(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     expand_macro(input)
 }

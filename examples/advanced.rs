@@ -1,4 +1,4 @@
-//! Comprehensive example demonstrating all features of the `api_client` macro.
+//! Comprehensive example demonstrating all features of the `beckon` macro.
 //!
 //! This example shows:
 //! - Request bodies (`req`)
@@ -9,7 +9,7 @@
 //! - Optional response types (omitting `res` returns `()`)
 //! - Endpoints without paths
 
-use http_provider_macro::api_client;
+use beckon::beckon;
 use reqwest::{header::HeaderMap, Url};
 use serde::{Deserialize, Serialize};
 
@@ -63,7 +63,7 @@ struct SearchQueryParams {
 }
 
 // Define an API client with all features
-api_client!(
+beckon!(
     ApiClient,
     {
         // Basic GET with path and response

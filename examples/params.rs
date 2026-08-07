@@ -3,7 +3,7 @@
 //! This example shows how to use `path_params` for dynamic URL segments
 //! and `query_params` for query string parameters.
 
-use http_provider_macro::api_client;
+use beckon::beckon;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
@@ -43,7 +43,7 @@ struct SearchQueryParams {
 }
 
 // Define an API client with path and query parameters
-api_client!(
+beckon!(
     ApiClient,
     {
         {
