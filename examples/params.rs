@@ -3,14 +3,14 @@
 //! This example shows how to use `path_params` for dynamic URL segments
 //! and `query_params` for query string parameters.
 
-use http_provider_macro::api_client;
+use beckon::beckon;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 // Response types
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct User {
+pub struct User {
     id: u32,
     name: String,
     email: String,
@@ -18,32 +18,32 @@ struct User {
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct SearchResults {
+pub struct SearchResults {
     results: Vec<User>,
     total: u32,
 }
 
 // Path parameters - fields must match the `{param}` placeholders in the path
 #[derive(Serialize)]
-struct UserPathParams {
+pub struct UserPathParams {
     id: u32,
 }
 
 #[derive(Serialize)]
-struct PostPathParams {
+pub struct PostPathParams {
     post_id: u32,
 }
 
 // Query parameters - will be serialized as query string
 #[derive(Serialize)]
-struct SearchQueryParams {
+pub struct SearchQueryParams {
     q: String,
     limit: Option<u32>,
     offset: Option<u32>,
 }
 
 // Define an API client with path and query parameters
-api_client!(
+beckon!(
     ApiClient,
     {
         {
@@ -69,7 +69,7 @@ api_client!(
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct Post {
+pub struct Post {
     id: u32,
     title: String,
     content: String,

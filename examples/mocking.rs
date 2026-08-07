@@ -1,28 +1,28 @@
 //! Example demonstrating how to mock the generated API client for testing.
 //!
-//! The `api_client` macro generates a trait (e.g., `ApiClientTrait`) that
+//! The `beckon` macro generates a trait (e.g., `ApiClientTrait`) that
 //! the client struct implements. You can implement this trait yourself to
 //! create mock clients for testing without making actual HTTP requests.
 
-use http_provider_macro::api_client;
+use beckon::beckon;
 use serde::{Deserialize, Serialize};
 
 // Response type
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct User {
+pub struct User {
     id: u32,
     name: String,
 }
 
 // Path parameters
 #[derive(Serialize)]
-struct UserPathParams {
+pub struct UserPathParams {
     id: u32,
 }
 
 // Define the client with a single endpoint
-api_client!(
+beckon!(
     ApiClient,
     {
         {
@@ -35,7 +35,7 @@ api_client!(
 );
 
 // Mock client implementing the generated trait
-struct MockProvider;
+pub struct MockProvider;
 
 impl ApiClientTrait for MockProvider {
     async fn get_users_by_id(&self, path_params: &UserPathParams) -> Result<User, ApiClientError> {

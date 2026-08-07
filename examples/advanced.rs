@@ -1,4 +1,4 @@
-//! Comprehensive example demonstrating all features of the `api_client` macro.
+//! Comprehensive example demonstrating all features of the `beckon` macro.
 //!
 //! This example shows:
 //! - Request bodies (`req`)
@@ -9,14 +9,14 @@
 //! - Optional response types (omitting `res` returns `()`)
 //! - Endpoints without paths
 
-use http_provider_macro::api_client;
+use beckon::beckon;
 use reqwest::{header::HeaderMap, Url};
 use serde::{Deserialize, Serialize};
 
 // Response types
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct User {
+pub struct User {
     id: u32,
     name: String,
     email: String,
@@ -24,46 +24,46 @@ struct User {
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct CreateUserResponse {
+pub struct CreateUserResponse {
     id: u32,
     message: String,
 }
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct SearchResults {
+pub struct SearchResults {
     results: Vec<User>,
     total: u32,
 }
 
 // Request body types
 #[derive(Serialize)]
-struct CreateUserRequest {
+pub struct CreateUserRequest {
     name: String,
     email: String,
 }
 
 #[derive(Serialize)]
-struct UpdateUserRequest {
+pub struct UpdateUserRequest {
     name: Option<String>,
     email: Option<String>,
 }
 
 // Path parameters
 #[derive(Serialize)]
-struct UserPathParams {
+pub struct UserPathParams {
     id: u32,
 }
 
 // Query parameters
 #[derive(Serialize)]
-struct SearchQueryParams {
+pub struct SearchQueryParams {
     q: String,
     limit: Option<u32>,
 }
 
 // Define an API client with all features
-api_client!(
+beckon!(
     ApiClient,
     {
         // Basic GET with path and response

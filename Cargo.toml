@@ -1,15 +1,16 @@
 [package]
-name = "http-provider-macro"
-version = "0.1.4"
+name = "beckon"
+version = "0.1.0"
 edition = "2021"
-authors = ["AzeemShaik azeemshaik025@gmail.com"]
-description = "A procedural macro for generating type-safe API clients"
-repository = "https://github.com/Azeem-0/api-client-macro"
+authors = ["Azeem Shaik <azeemshaik025@gmail.com>"]
+description = "Generate type-safe, async HTTP clients from endpoint definitions — a Rust proc macro."
+repository = "https://github.com/azeemshaik025/beckon"
+homepage = "https://github.com/azeemshaik025/beckon"
 license = "MIT OR Apache-2.0"
-keywords = ["http", "client", "macro", "rest", "api"]
+keywords = ["http", "client", "rest", "api", "proc-macro"]
 categories = ["web-programming::http-client", "development-tools"]
 readme = "README.md"
-documentation = "https://docs.rs/http-provider-macro"
+documentation = "https://docs.rs/beckon"
 
 [lib]
 proc-macro = true
@@ -22,8 +23,8 @@ regex = "1.11.1"
 syn = { version = "2.0.102", features = ["full", "extra-traits", "parsing"] }
 
 [dev-dependencies]
-wiremock = "0.5"
-reqwest = { version = "0.11", features = ["json"] }
+wiremock = "0.6"
+reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.122"

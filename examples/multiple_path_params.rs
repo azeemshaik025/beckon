@@ -3,13 +3,13 @@
 //! When you have multiple path parameters like `/users/{user_id}/posts/{post_id}`,
 //! the generated function name will be: `get_users_by_user_id_posts_by_post_id`
 
-use http_provider_macro::api_client;
+use beckon::beckon;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
-struct Post {
+pub struct Post {
     id: u32,
     title: String,
     content: String,
@@ -17,13 +17,13 @@ struct Post {
 
 // Path parameters struct - fields must match all `{param}` placeholders in the path
 #[derive(Serialize)]
-struct UserPostPathParams {
+pub struct UserPostPathParams {
     user_id: u32,
     post_id: u32,
 }
 
 // Define an API client with multiple path parameters
-api_client!(
+beckon!(
     ApiClient,
     {
         {
@@ -46,7 +46,7 @@ api_client!(
 );
 
 #[derive(Serialize)]
-struct CommentReplyPathParams {
+pub struct CommentReplyPathParams {
     id: u32,
     comment_id: u32,
     reply_id: u32,

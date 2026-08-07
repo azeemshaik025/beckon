@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use http_provider_macro::{api_client, http_provider};
+    use beckon::beckon;
     use reqwest::{header::HeaderMap, Url};
     use serde::{Deserialize, Serialize};
     use std::str::FromStr;
     use wiremock::{matchers::method, Mock, MockServer, ResponseTemplate};
 
     // Define the client with various endpoint configurations
-    api_client!(
+    beckon!(
         HttpProvider,
         {
             {
@@ -48,22 +48,22 @@ mod tests {
 
     // Test data structures
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    struct MyResponse {
+    pub struct MyResponse {
         value: String,
     }
 
     #[derive(Serialize, Deserialize)]
-    struct MyRequest {
+    pub struct MyRequest {
         data: String,
     }
 
     #[derive(Serialize, Deserialize)]
-    struct PathParams {
+    pub struct PathParams {
         id: String,
     }
 
     #[derive(Serialize, Deserialize)]
-    struct QueryParams {
+    pub struct QueryParams {
         q: String,
     }
 
@@ -74,35 +74,6 @@ mod tests {
     }
 
     // Basic functionality tests
-    #[tokio::test]
-    async fn test_http_provider_macro_alias() -> Result<(), Box<dyn std::error::Error>> {
-        http_provider!(
-            AliasProvider,
-            {
-                {
-                    path: "/alias",
-                    method: GET,
-                    res: MyResponse,
-                },
-            }
-        );
-
-        let mock_server = MockServer::start().await;
-        let response = create_success_response("alias-ok");
-
-        Mock::given(method("GET"))
-            .and(wiremock::matchers::path("/alias"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(response))
-            .mount(&mock_server)
-            .await;
-
-        let provider = AliasProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
-        let result = provider.get_alias().await?;
-
-        assert_eq!(result.value, "alias-ok");
-        Ok(())
-    }
-
     #[tokio::test]
     async fn test_get_with_path() -> Result<(), Box<dyn std::error::Error>> {
         let mock_server = MockServer::start().await;
@@ -232,7 +203,7 @@ mod tests {
     #[tokio::test]
     async fn test_trait_mock_provider() -> Result<(), Box<dyn std::error::Error>> {
         // Simple client for trait testing
-        api_client!(
+        beckon!(
             SimpleProvider,
             {
                 {
@@ -249,7 +220,7 @@ mod tests {
             }
         );
 
-        struct MockProvider;
+        pub struct MockProvider;
 
         impl SimpleProviderTrait for MockProvider {
             async fn get_items(&self) -> Result<MyResponse, SimpleProviderError> {
@@ -281,7 +252,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_patch_with_body() -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             PatchProvider,
             {
                 {
@@ -346,12 +317,12 @@ mod tests {
     #[tokio::test]
     async fn test_multiple_path_params() -> Result<(), Box<dyn std::error::Error>> {
         #[derive(Serialize, Deserialize)]
-        struct MultiPathParams {
+        pub struct MultiPathParams {
             user_id: String,
             post_id: String,
         }
 
-        api_client!(
+        beckon!(
             MultiParamProvider,
             {
                 {
@@ -389,7 +360,7 @@ mod tests {
     #[tokio::test]
     async fn test_retry_on_5xx_succeeds_after_transient_failure(
     ) -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             RetryProvider,
             retries: 3,
             {
@@ -428,7 +399,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_no_retry_on_4xx() -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             Retry4xxProvider,
             retries: 3,
             {
@@ -458,7 +429,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_retry_endpoint_override() -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             RetryOverrideProvider,
             retries: 3,
             {
@@ -510,7 +481,7 @@ mod tests {
     #[tokio::test]
     async fn test_optional_response() -> Result<(), Box<dyn std::error::Error>> {
         // Client with optional response (no res field)
-        api_client!(
+        beckon!(
             NoResponseProvider,
             {
                 {
@@ -560,7 +531,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_bearer_auth() -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             BearerApi,
             auth: Bearer,
             {
@@ -594,7 +565,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_basic_auth() -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             BasicApi,
             auth: Basic,
             {
@@ -630,7 +601,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_api_key_auth() -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             ApiKeyApi,
             auth: ApiKey("X-Api-Key"),
             {
@@ -665,7 +636,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_auth_with_retries() -> Result<(), Box<dyn std::error::Error>> {
-        api_client!(
+        beckon!(
             AuthRetryApi,
             auth: Bearer,
             retries: 2,

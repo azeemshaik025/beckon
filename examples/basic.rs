@@ -1,29 +1,29 @@
-//! Basic example demonstrating minimal usage of the `api_client` macro.
+//! Basic example demonstrating minimal usage of the `beckon` macro.
 //!
 //! This example shows the simplest way to create an HTTP API client
 //! with just the essential fields: `method`, `path`, and `res`.
 
-use http_provider_macro::api_client;
+use beckon::beckon;
 use reqwest::Url;
 use serde::Deserialize;
 
 // Define your response types
 #[derive(Deserialize, Debug)]
-struct User {
+pub struct User {
     id: u32,
     name: String,
     email: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct Post {
+pub struct Post {
     id: u32,
     title: String,
     content: String,
 }
 
 // Define your API client with minimal configuration
-api_client!(
+beckon!(
     ApiClient,
     {
         {
