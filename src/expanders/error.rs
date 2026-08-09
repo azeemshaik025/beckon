@@ -20,8 +20,6 @@ impl<'a> ErrorExpander<'a> {
             pub enum #error_name {
                 UrlConstruction(String),
                 Request(reqwest::Error),
-                /// A non-2xx response. `body` holds the raw response payload the server
-                /// returned (often a JSON error object), or `""` if it couldn't be read.
                 Http { status: u16, reason: String, body: String },
                 Deserialization(String),
             }

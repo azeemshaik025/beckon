@@ -352,6 +352,102 @@ mod tests {
         Ok(())
     }
 
+    // A non-2xx with no body must leave `body` empty and keep `Display` clean (no
+    // trailing separator).
+    #[tokio::test]
+    async fn test_http_error_empty_body() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
+        let err = provider.get_users().await.unwrap_err();
+
+        match &err {
+            HttpProviderError::Http { status, body, .. } => {
+                assert_eq!(*status, 404);
+                assert_eq!(body, "");
+            }
+            other => panic!("expected Http error, got {other:?}"),
+        }
+        assert_eq!(format!("{err}"), "HTTP 404 Not Found");
+        Ok(())
+    }
+
+    // A non-JSON error body is captured verbatim and surfaced through `Display`.
+    #[tokio::test]
+    async fn test_http_error_plain_text_body() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .respond_with(ResponseTemplate::new(500).set_body_string("upstream exploded"))
+            .mount(&mock_server)
+            .await;
+
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
+        let err = provider.get_users().await.unwrap_err();
+
+        match &err {
+            HttpProviderError::Http { status, body, .. } => {
+                assert_eq!(*status, 500);
+                assert_eq!(body, "upstream exploded");
+            }
+            other => panic!("expected Http error, got {other:?}"),
+        }
+        assert_eq!(
+            format!("{err}"),
+            "HTTP 500 Internal Server Error: upstream exploded"
+        );
+        Ok(())
+    }
+
+    // The retry path is a separate branch: after retries are exhausted on a 5xx, the
+    // error must still carry the body from the final response.
+    #[tokio::test]
+    async fn test_http_error_body_on_retry_path() -> Result<(), Box<dyn std::error::Error>> {
+        beckon!(
+            RetryBodyProvider,
+            retries: 2,
+            {
+                {
+                    path: "/always-500",
+                    method: GET,
+                    res: MyResponse,
+                },
+            }
+        );
+
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/always-500"))
+            .respond_with(
+                ResponseTemplate::new(503).set_body_string(r#"{"error":"service unavailable"}"#),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let provider =
+            RetryBodyProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
+        let err = provider.get_always_500().await.unwrap_err();
+
+        match err {
+            RetryBodyProviderError::Http { status, body, .. } => {
+                assert_eq!(status, 503);
+                assert!(body.contains("service unavailable"), "body was: {body}");
+            }
+            other => panic!("expected Http error, got {other:?}"),
+        }
+        Ok(())
+    }
+
     #[tokio::test]
     async fn test_multiple_path_params() -> Result<(), Box<dyn std::error::Error>> {
         #[derive(Serialize, Deserialize)]
