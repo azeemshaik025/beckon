@@ -131,8 +131,21 @@ beckon!(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Build one `reqwest::Client` and share it across API clients. It owns the
+    // connection pool, TLS session cache, and DNS cache, so every client built
+    // from it — or from a clone, since `reqwest::Client` is `Arc`-backed —
+    // reuses that state instead of opening fresh connections and re-doing TLS.
+    let http = reqwest::Client::builder()
+        .user_agent("beckon-example/1.0")
+        .pool_max_idle_per_host(16)
+        .build()?;
+
     let base_url = Url::parse("https://api.example.com")?;
-    let client = ApiClient::new(base_url, Some(5000));
+    let client = ApiClient::with_client(base_url, http.clone(), Some(5000));
+
+    // A client for a different service reuses the very same pool and TLS state.
+    let analytics_url = Url::parse("https://analytics.example.com")?;
+    let _analytics = ApiClient::with_client(analytics_url, http, Some(5000));
 
     // Basic GET request
     let users = client.get_users().await?;

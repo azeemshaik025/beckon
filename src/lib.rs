@@ -37,7 +37,7 @@
 //! );
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! let client = UserApi::new(reqwest::Url::parse("https://api.example.com")?, Some(30));
+//! let client = UserApi::new(reqwest::Url::parse("https://api.example.com")?, Some(5000));
 //! let _users = client.get_users().await?;
 //! let _user = client.get_users_by_id(&UserPath { id: 1 }).await?;
 //! # Ok(())

@@ -674,4 +674,104 @@ mod tests {
         assert_eq!(result.value, "auth-retry-ok");
         Ok(())
     }
+
+    // A path param value containing `/` must be percent-encoded so it stays a single
+    // segment. The mock only matches a single segment after `/users/`, so a raw `/`
+    // (two segments) would miss and the call would fail.
+    #[tokio::test]
+    async fn test_path_params_are_percent_encoded() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+        let response = create_success_response("encoded");
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path_regex(r"^/users/[^/]+$"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(response))
+            .mount(&mock_server)
+            .await;
+
+        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let result = provider
+            .get_users_by_id(&PathParams {
+                id: "1/2".to_string(),
+            })
+            .await?;
+
+        assert_eq!(result.value, "encoded");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_with_client_constructor() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+        let response = create_success_response("shared-client");
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(response))
+            .mount(&mock_server)
+            .await;
+
+        let client = reqwest::Client::new();
+        let provider =
+            HttpProvider::with_client(Url::from_str(&mock_server.uri())?, client, Some(5000));
+        let result = provider.get_users().await?;
+
+        assert_eq!(result.value, "shared-client");
+        Ok(())
+    }
+
+    // Proves `with_client` actually uses the caller's client (not a fresh one): a
+    // default header configured on the injected client must reach the server. This
+    // is the same mechanism by which its connection pool and TLS state are reused.
+    #[tokio::test]
+    async fn test_with_client_uses_caller_config() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+        let response = create_success_response("configured");
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .and(wiremock::matchers::header("x-app", "beckon"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(response))
+            .mount(&mock_server)
+            .await;
+
+        let mut default_headers = HeaderMap::new();
+        default_headers.insert("x-app", "beckon".parse()?);
+        let http = reqwest::Client::builder()
+            .default_headers(default_headers)
+            .build()?;
+
+        let provider =
+            HttpProvider::with_client(Url::from_str(&mock_server.uri())?, http, Some(5000));
+        // Mock only matches when the injected client's default header is present.
+        let result = provider.get_users().await?;
+
+        assert_eq!(result.value, "configured");
+        Ok(())
+    }
+
+    // The struct derives `Clone`; a clone must be independently functional and the
+    // original must remain usable afterwards.
+    #[tokio::test]
+    async fn test_cloned_client_still_works() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(create_success_response("cloned")),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let cloned = provider.clone();
+
+        let from_clone = cloned.get_users().await?;
+        let from_original = provider.get_users().await?;
+
+        assert_eq!(from_clone.value, "cloned");
+        assert_eq!(from_original.value, "cloned");
+        Ok(())
+    }
 }

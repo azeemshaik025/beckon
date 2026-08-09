@@ -145,11 +145,22 @@ beckon!(
 
 Per-endpoint `retries` overrides the global value. Omitting `retries` entirely means no retries.
 
+## Constructors
+
+- `UserApi::new(url, timeout)` — uses a default `reqwest::Client`.
+- `UserApi::with_client(url, client, timeout)` — supply your own `reqwest::Client` to
+  share a connection pool, TLS config, proxy, or default headers.
+
+```rust
+let http = reqwest::Client::builder().user_agent("my-app/1.0").build()?;
+let client = UserApi::with_client(url, http, Some(5000));
+```
+
 ## Generated Code
 
 For a client named `UserApi`, the macro generates:
 
-- A **struct** `UserApi` with a `new(url, timeout)` constructor
+- A **struct** `UserApi` (derives `Clone`) with `new` and `with_client` constructors
 - An **async method** for each endpoint
 - A **trait** `UserApiTrait` for mocking in tests
 - An **error enum** `UserApiError` with variants for URL, request, HTTP, and deserialization errors

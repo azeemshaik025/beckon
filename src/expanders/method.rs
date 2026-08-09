@@ -261,7 +261,10 @@ impl<'a> UrlExpander<'a> {
                 let param_name = &cap[1];
                 let ident = Ident::new(param_name, Span::call_site());
                 quote! {
-                    path = path.replace(concat!("{", #param_name, "}"), &path_params.#ident.to_string());
+                    path = path.replace(
+                        concat!("{", #param_name, "}"),
+                        &Self::__beckon_encode_segment(&path_params.#ident.to_string()),
+                    );
                 }
             })
             .collect();
