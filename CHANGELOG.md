@@ -5,6 +5,23 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1]
+
+Documentation and metadata only — no code or behavior changes.
+
+### Documentation
+
+- The crate-level docs (docs.rs) are now sourced from the README via
+  `#![doc = include_str!("../README.md")]`, so docs.rs and crates.io no longer drift —
+  auth, retries, `with_client`, and error handling are all documented in both places.
+- README: documented the method-naming rule, and example links are now absolute so they
+  resolve on crates.io and docs.rs.
+
+### Changed
+
+- Declared the minimum supported Rust version: `rust-version = "1.75"` (the generated
+  mocking trait uses `async fn` in traits). This was already required; it is now explicit.
+
 ## [0.3.0]
 
 This release contains breaking changes to the constructor signature and the generated
