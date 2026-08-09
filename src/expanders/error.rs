@@ -16,10 +16,13 @@ impl<'a> ErrorExpander<'a> {
 
         quote! {
             #[derive(Debug)]
+            #[non_exhaustive]
             pub enum #error_name {
                 UrlConstruction(String),
                 Request(reqwest::Error),
-                Http { status: u16, reason: String },
+                /// A non-2xx response. `body` holds the raw response payload the server
+                /// returned (often a JSON error object), or `""` if it couldn't be read.
+                Http { status: u16, reason: String, body: String },
                 Deserialization(String),
             }
 
@@ -28,7 +31,13 @@ impl<'a> ErrorExpander<'a> {
                     match self {
                         Self::UrlConstruction(msg) => write!(f, "Failed to construct URL: {}", msg),
                         Self::Request(err) => write!(f, "Request failed: {}", err),
-                        Self::Http { status, reason } => write!(f, "HTTP {} {}", status, reason),
+                        Self::Http { status, reason, body } => {
+                            if body.is_empty() {
+                                write!(f, "HTTP {} {}", status, reason)
+                            } else {
+                                write!(f, "HTTP {} {}: {}", status, reason, body)
+                            }
+                        }
                         Self::Deserialization(msg) => write!(f, "Failed to deserialize: {}", msg),
                     }
                 }

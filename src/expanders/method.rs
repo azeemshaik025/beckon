@@ -90,9 +90,11 @@ impl<'a> MethodExpander<'a> {
                                     .canonical_reason()
                                     .unwrap_or("Unknown")
                                     .to_string();
+                                let body = response.text().await.unwrap_or_default();
                                 return Err(#error_name::Http {
                                     status: status.as_u16(),
                                     reason,
+                                    body,
                                 });
                             }
                             break #deserialize;
@@ -111,9 +113,11 @@ impl<'a> MethodExpander<'a> {
                         .canonical_reason()
                         .unwrap_or("Unknown")
                         .to_string();
+                    let body = response.text().await.unwrap_or_default();
                     return Err(#error_name::Http {
                         status: status.as_u16(),
                         reason,
+                        body,
                     });
                 }
                 #deserialize

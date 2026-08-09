@@ -6,6 +6,7 @@
 use beckon::beckon;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
@@ -55,7 +56,7 @@ pub struct CommentReplyPathParams {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base_url = Url::parse("https://api.example.com")?;
-    let client = ApiClient::new(base_url, Some(5000));
+    let client = ApiClient::new(base_url, Duration::from_secs(5));
 
     // Use the generated method with multiple path parameters
     // Function name: get_users_posts_by_user_id_and_post_id

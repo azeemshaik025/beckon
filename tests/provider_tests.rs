@@ -4,6 +4,7 @@ mod tests {
     use reqwest::{header::HeaderMap, Url};
     use serde::{Deserialize, Serialize};
     use std::str::FromStr;
+    use std::time::Duration;
     use wiremock::{matchers::method, Mock, MockServer, ResponseTemplate};
 
     // Define the client with various endpoint configurations
@@ -85,7 +86,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider.get_users().await?;
 
         assert_eq!(result.value, "users");
@@ -103,7 +105,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider
             .get_users_by_id(&PathParams {
                 id: "123".to_string(),
@@ -126,7 +129,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider
             .get_search(&QueryParams {
                 q: "test".to_string(),
@@ -149,7 +153,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let mut headers = HeaderMap::new();
         headers.insert("x-api-key", "secret".parse()?);
 
@@ -170,7 +175,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider.get().await?;
 
         assert_eq!(result.value, "no-path");
@@ -188,7 +194,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider
             .post_users(&MyRequest {
                 data: "test".to_string(),
@@ -274,7 +281,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = PatchProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            PatchProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider
             .patch_users_by_id(
                 &PathParams {
@@ -300,7 +308,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider.get_users().await;
 
         assert!(result.is_err());
@@ -311,6 +320,35 @@ mod tests {
             "Expected 404 in error: {}",
             err_msg
         );
+        Ok(())
+    }
+
+    // The server's error payload must survive on the `Http` variant instead of being
+    // discarded, so the caller can see *why* a request was rejected.
+    #[tokio::test]
+    async fn test_http_error_captures_body() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .respond_with(
+                ResponseTemplate::new(422)
+                    .set_body_string(r#"{"error":"email already taken","code":"user_exists"}"#),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
+        let err = provider.get_users().await.unwrap_err();
+
+        match err {
+            HttpProviderError::Http { status, body, .. } => {
+                assert_eq!(status, 422);
+                assert!(body.contains("user_exists"), "body was: {body}");
+            }
+            other => panic!("expected Http error, got {other:?}"),
+        }
         Ok(())
     }
 
@@ -343,7 +381,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = MultiParamProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            MultiParamProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider
             .get_users_posts_by_user_id_and_post_id(&MultiPathParams {
                 user_id: "1".to_string(),
@@ -390,7 +429,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = RetryProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            RetryProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider.get_flaky().await?;
 
         assert_eq!(result.value, "recovered");
@@ -420,7 +460,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = Retry4xxProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            Retry4xxProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider.get_not_found().await;
 
         assert!(result.is_err());
@@ -452,7 +493,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = RetryOverrideProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            RetryOverrideProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider.get_no_retry().await;
 
         assert!(result.is_err());
@@ -471,7 +513,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider.get_users().await?;
 
         assert_eq!(result.value, "compat");
@@ -510,7 +553,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = NoResponseProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            NoResponseProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
 
         // Test DELETE without response
         let result: Result<(), _> = provider.delete_delete().await;
@@ -556,7 +600,11 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = BearerApi::new(Url::from_str(&mock_server.uri())?, "my-token", Some(5000));
+        let provider = BearerApi::new(
+            Url::from_str(&mock_server.uri())?,
+            "my-token",
+            Duration::from_secs(5),
+        );
         let result = provider.get_protected().await?;
 
         assert_eq!(result.value, "bearer-ok");
@@ -591,7 +639,7 @@ mod tests {
             Url::from_str(&mock_server.uri())?,
             "user",
             "pass",
-            Some(5000),
+            Duration::from_secs(5),
         );
         let result = provider.get_secure().await?;
 
@@ -626,7 +674,7 @@ mod tests {
         let provider = ApiKeyApi::new(
             Url::from_str(&mock_server.uri())?,
             "sk_live_123",
-            Some(5000),
+            Duration::from_secs(5),
         );
         let result = provider.get_data().await?;
 
@@ -668,7 +716,11 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = AuthRetryApi::new(Url::from_str(&mock_server.uri())?, "tok", Some(5000));
+        let provider = AuthRetryApi::new(
+            Url::from_str(&mock_server.uri())?,
+            "tok",
+            Duration::from_secs(5),
+        );
         let result = provider.get_flaky_auth().await?;
 
         assert_eq!(result.value, "auth-retry-ok");
@@ -689,7 +741,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let result = provider
             .get_users_by_id(&PathParams {
                 id: "1/2".to_string(),
@@ -712,8 +765,11 @@ mod tests {
             .await;
 
         let client = reqwest::Client::new();
-        let provider =
-            HttpProvider::with_client(Url::from_str(&mock_server.uri())?, client, Some(5000));
+        let provider = HttpProvider::with_client(
+            Url::from_str(&mock_server.uri())?,
+            client,
+            Duration::from_secs(5),
+        );
         let result = provider.get_users().await?;
 
         assert_eq!(result.value, "shared-client");
@@ -741,8 +797,11 @@ mod tests {
             .default_headers(default_headers)
             .build()?;
 
-        let provider =
-            HttpProvider::with_client(Url::from_str(&mock_server.uri())?, http, Some(5000));
+        let provider = HttpProvider::with_client(
+            Url::from_str(&mock_server.uri())?,
+            http,
+            Duration::from_secs(5),
+        );
         // Mock only matches when the injected client's default header is present.
         let result = provider.get_users().await?;
 
@@ -764,7 +823,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, Some(5000));
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
         let cloned = provider.clone();
 
         let from_clone = cloned.get_users().await?;

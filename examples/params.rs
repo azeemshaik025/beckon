@@ -6,6 +6,7 @@
 use beckon::beckon;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 // Response types
 #[derive(Deserialize, Debug)]
@@ -78,7 +79,7 @@ pub struct Post {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base_url = Url::parse("https://api.example.com")?;
-    let client = ApiClient::new(base_url, Some(5000));
+    let client = ApiClient::new(base_url, Duration::from_secs(5));
 
     // Use path parameters - the `{id}` in the path will be replaced with the value
     let user = client.get_users_by_id(&UserPathParams { id: 42 }).await?;
