@@ -63,26 +63,30 @@ impl ApiClientExpander {
         let struct_name = &self.input.struct_name;
         let trait_name = self.trait_name();
 
-        let (auth_fields, auth_params, auth_inits) = match &self.input.auth {
+        let (auth_fields, auth_params, auth_args, auth_inits) = match &self.input.auth {
             Some(AuthStrategy::Bearer) => (
                 quote! { token: String, },
                 quote! { token: &str, },
+                quote! { token, },
                 quote! { token: token.to_string(), },
             ),
             Some(AuthStrategy::Basic) => (
                 quote! { username: String, password: String, },
                 quote! { username: &str, password: &str, },
+                quote! { username, password, },
                 quote! { username: username.to_string(), password: password.to_string(), },
             ),
             Some(AuthStrategy::ApiKey(_)) => (
                 quote! { api_key: String, },
                 quote! { api_key: &str, },
+                quote! { api_key, },
                 quote! { api_key: api_key.to_string(), },
             ),
-            None => (quote! {}, quote! {}, quote! {}),
+            None => (quote! {}, quote! {}, quote! {}, quote! {}),
         };
 
         quote! {
+            #[derive(Clone)]
             pub struct #struct_name {
                 url: reqwest::Url,
                 client: reqwest::Client,
@@ -92,9 +96,40 @@ impl ApiClientExpander {
 
             impl #struct_name {
                 pub fn new(url: reqwest::Url, #auth_params timeout: Option<u64>) -> Self {
-                    let client = reqwest::Client::new();
+                    Self::with_client(url, #auth_args reqwest::Client::new(), timeout)
+                }
+
+                /// Build the client with a caller-supplied `reqwest::Client`, so a single
+                /// connection pool, TLS config, proxy, or default headers can be shared.
+                pub fn with_client(
+                    url: reqwest::Url,
+                    #auth_params
+                    client: reqwest::Client,
+                    timeout: Option<u64>,
+                ) -> Self {
                     let timeout = std::time::Duration::from_millis(timeout.unwrap_or(5000));
                     Self { url, client, timeout, #auth_inits }
+                }
+
+                #[doc(hidden)]
+                #[allow(dead_code)]
+                fn __beckon_encode_segment(__s: &str) -> String {
+                    // Percent-encode everything outside the RFC 3986 unreserved set so a
+                    // path-param value like `1/2` or `a?b` can't break out of its segment.
+                    const __HEX: &[u8; 16] = b"0123456789ABCDEF";
+                    let mut __out = String::with_capacity(__s.len());
+                    for __b in __s.bytes() {
+                        match __b {
+                            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9'
+                            | b'-' | b'_' | b'.' | b'~' => __out.push(__b as char),
+                            _ => {
+                                __out.push('%');
+                                __out.push(__HEX[(__b >> 4) as usize] as char);
+                                __out.push(__HEX[(__b & 0x0f) as usize] as char);
+                            }
+                        }
+                    }
+                    __out
                 }
             }
 

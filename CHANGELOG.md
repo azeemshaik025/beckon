@@ -5,6 +5,22 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0]
+
+### Fixed
+
+- **Path parameters are now percent-encoded.** A value such as `1/2` or `a?b` is
+  encoded (`1%2F2`, `a%3Fb`) so it can no longer break out of its URL path segment.
+  Previously it was substituted verbatim.
+
+### Added
+
+- `with_client(url, [auth], client, timeout)` constructor, so a caller-supplied
+  `reqwest::Client` — and its connection pool, TLS config, proxy, or default headers —
+  can be shared across clients. `new` now builds on top of it.
+- The generated client struct derives `Clone` (cheap: `reqwest::Client` is `Arc`-backed),
+  so it can be cloned into spawned tasks.
+
 ## [0.1.1]
 
 ### Documentation
