@@ -95,19 +95,26 @@ impl ApiClientExpander {
             }
 
             impl #struct_name {
-                pub fn new(url: reqwest::Url, #auth_params timeout: Option<u64>) -> Self {
+                /// `timeout` accepts a `std::time::Duration`, or `None` for the 5s default.
+                pub fn new(
+                    url: reqwest::Url,
+                    #auth_params
+                    timeout: impl Into<Option<std::time::Duration>>,
+                ) -> Self {
                     Self::with_client(url, #auth_args reqwest::Client::new(), timeout)
                 }
 
                 /// Build the client with a caller-supplied `reqwest::Client`, so a single
                 /// connection pool, TLS config, proxy, or default headers can be shared.
+                ///
+                /// `timeout` accepts a `std::time::Duration`, or `None` for the 5s default.
                 pub fn with_client(
                     url: reqwest::Url,
                     #auth_params
                     client: reqwest::Client,
-                    timeout: Option<u64>,
+                    timeout: impl Into<Option<std::time::Duration>>,
                 ) -> Self {
-                    let timeout = std::time::Duration::from_millis(timeout.unwrap_or(5000));
+                    let timeout = timeout.into().unwrap_or(std::time::Duration::from_secs(5));
                     Self { url, client, timeout, #auth_inits }
                 }
 

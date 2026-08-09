@@ -12,6 +12,7 @@
 use beckon::beckon;
 use reqwest::{header::HeaderMap, Url};
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 // Response types
 #[derive(Deserialize, Debug)]
@@ -141,11 +142,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     let base_url = Url::parse("https://api.example.com")?;
-    let client = ApiClient::with_client(base_url, http.clone(), Some(5000));
+    let client = ApiClient::with_client(base_url, http.clone(), Duration::from_secs(5));
 
     // A client for a different service reuses the very same pool and TLS state.
     let analytics_url = Url::parse("https://analytics.example.com")?;
-    let _analytics = ApiClient::with_client(analytics_url, http, Some(5000));
+    let _analytics = ApiClient::with_client(analytics_url, http, Duration::from_secs(5));
 
     // Basic GET request
     let users = client.get_users().await?;

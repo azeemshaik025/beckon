@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // The same function works with the real client too:
     // let base_url = reqwest::Url::parse("https://api.example.com")?;
-    // let real_client = ApiClient::new(base_url, Some(5000));
+    // let real_client = ApiClient::new(base_url, std::time::Duration::from_secs(5));
     // let name = get_user_name(&real_client, 42).await?;
 
     Ok(())

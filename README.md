@@ -30,6 +30,7 @@ cargo add tokio --features full
 ```rust
 use beckon::beckon;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 #[derive(Serialize, Deserialize)]
 struct User {
@@ -69,7 +70,7 @@ beckon!(
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = UserApi::new(
         reqwest::Url::parse("https://api.example.com")?,
-        Some(5000),
+        Duration::from_secs(5),
     );
 
     let users = client.get_users().await?;
@@ -103,15 +104,15 @@ Add automatic authentication to every request. Three strategies are supported:
 ```rust
 // Bearer token — injects `Authorization: Bearer <token>`
 beckon!(GithubApi, auth: Bearer, { /* ... */ });
-let client = GithubApi::new(url, "ghp_xxxx", Some(5000));
+let client = GithubApi::new(url, "ghp_xxxx", Duration::from_secs(5));
 
 // Basic auth — injects `Authorization: Basic <base64>`
 beckon!(DbApi, auth: Basic, { /* ... */ });
-let client = DbApi::new(url, "admin", "secret", Some(5000));
+let client = DbApi::new(url, "admin", "secret", Duration::from_secs(5));
 
 // API key — injects a custom header
 beckon!(StripeApi, auth: ApiKey("X-Api-Key"), { /* ... */ });
-let client = StripeApi::new(url, "sk_live_xxxx", Some(5000));
+let client = StripeApi::new(url, "sk_live_xxxx", Duration::from_secs(5));
 ```
 
 Omitting `auth` keeps the plain `new(url, timeout)` constructor. Auth composes with every
@@ -151,10 +152,30 @@ Per-endpoint `retries` overrides the global value. Omitting `retries` entirely m
 - `UserApi::with_client(url, client, timeout)` — supply your own `reqwest::Client` to
   share a connection pool, TLS config, proxy, or default headers.
 
+`timeout` accepts a `std::time::Duration`, or `None` for the 5-second default.
+
 ```rust
 let http = reqwest::Client::builder().user_agent("my-app/1.0").build()?;
-let client = UserApi::with_client(url, http, Some(5000));
+let client = UserApi::with_client(url, http, Duration::from_secs(5));
 ```
+
+## Errors
+
+Every method returns `Result<Res, UserApiError>`. On a non-2xx response you get the
+`Http` variant, which carries the server's response body so you can see *why* a request
+was rejected:
+
+```rust
+match client.get_users_by_id(&UserPath { id: 999 }).await {
+    Ok(user) => { /* ... */ }
+    Err(UserApiError::Http { status, reason, body }) => {
+        eprintln!("HTTP {status} {reason}: {body}"); // body = the server's error payload
+    }
+    Err(other) => eprintln!("{other}"),
+}
+```
+
+The enum is `#[non_exhaustive]`, so matching downstream should keep a `_` arm.
 
 ## Generated Code
 
@@ -174,6 +195,7 @@ See the [`examples/`](examples/) directory:
 - [`advanced.rs`](examples/advanced.rs) — all features
 - [`mocking.rs`](examples/mocking.rs) — testing with the generated trait
 - [`multiple_path_params.rs`](examples/multiple_path_params.rs) — nested resources
+- [`error_handling.rs`](examples/error_handling.rs) — inspecting a failed request's body
 
 ## License
 

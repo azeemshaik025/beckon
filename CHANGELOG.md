@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0]
+
+This release contains breaking changes to the constructor signature and the generated
+error enum.
+
+### Added
+
+- **The `Http` error variant now carries the response body.** A non-2xx response keeps the
+  raw payload the server returned (`Http { status, reason, body }`), so the reason a request
+  was rejected is no longer discarded. `Display` includes the body when present.
+
+### Changed
+
+- **Breaking:** `new` and `with_client` now take the timeout as
+  `impl Into<Option<std::time::Duration>>` instead of `Option<u64>` milliseconds. Pass a
+  `Duration` (e.g. `Duration::from_secs(5)`) or `None` for the 5-second default. This removes
+  the footgun where `Some(30)` meant 30 **milliseconds**, not 30 seconds.
+- **Breaking:** the generated error enum is now `#[non_exhaustive]` and the `Http` variant has
+  a new `body` field. Exhaustive `match`es on it (from another crate) need a `_` arm.
+
 ## [0.2.0]
 
 ### Fixed
