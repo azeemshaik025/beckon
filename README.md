@@ -35,14 +35,14 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 #[derive(Serialize, Deserialize)]
-struct User {
-    id: u32,
-    name: String,
+pub struct User {
+    pub id: u32,
+    pub name: String,
 }
 
 #[derive(Serialize)]
-struct UserPath {
-    id: u32,
+pub struct UserPath {
+    pub id: u32,
 }
 
 beckon!(
