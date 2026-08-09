@@ -206,6 +206,27 @@ mod tests {
         Ok(())
     }
 
+    // The docs promise `None` selects the default timeout — this must compile without a
+    // turbofish (`None::<Duration>`) and work end to end.
+    #[tokio::test]
+    async fn test_new_with_none_timeout() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(create_success_response("default")),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let provider = HttpProvider::new(Url::from_str(&mock_server.uri())?, None);
+        let result = provider.get_users().await?;
+
+        assert_eq!(result.value, "default");
+        Ok(())
+    }
+
     // Trait-based mock client test
     #[tokio::test]
     async fn test_trait_mock_provider() -> Result<(), Box<dyn std::error::Error>> {
