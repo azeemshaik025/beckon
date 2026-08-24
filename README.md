@@ -164,6 +164,9 @@ let http = reqwest::Client::builder().user_agent("my-app/1.0").build()?;
 let client = UserApi::with_client(url, http, Duration::from_secs(5));
 ```
 
+A base URL with a path prefix is preserved — `https://api.example.com/v1` plus an
+endpoint path `/users` requests `https://api.example.com/v1/users`.
+
 ## Errors
 
 Every method returns `Result<Res, UserApiError>`. On a non-2xx response you get the

@@ -277,7 +277,8 @@ impl<'a> UrlExpander<'a> {
         quote! {
             let mut path = #path.to_string();
             #(#replacements)*
-            let url = self.url.join(&path)
+            // Join relative to the base so a base path prefix (e.g. `/v1`) is kept.
+            let url = self.url.join(path.trim_start_matches('/'))
                 .map_err(|e| #error_name::UrlConstruction(e.to_string()))?;
         }
     }
@@ -285,7 +286,8 @@ impl<'a> UrlExpander<'a> {
     fn expand_without_path_params(&self, path: &syn::LitStr) -> TokenStream {
         let error_name = self.error_name;
         quote! {
-            let url = self.url.join(#path)
+            // Join relative to the base so a base path prefix (e.g. `/v1`) is kept.
+            let url = self.url.join(#path.trim_start_matches('/'))
                 .map_err(|e| #error_name::UrlConstruction(e.to_string()))?;
         }
     }
