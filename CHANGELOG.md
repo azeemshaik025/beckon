@@ -5,6 +5,17 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0]
+
+### Fixed
+
+- **Base-URL path prefixes are now preserved.** A base like `https://api.example.com/v1`
+  used to have its `/v1` dropped when an endpoint path (e.g. `/users`) was joined, because
+  an absolute path replaces the base path per RFC 3986. beckon now normalizes the base to a
+  trailing `/` and joins endpoint paths relative to it, so `/v1` + `/users` →
+  `https://api.example.com/v1/users`. Clients using a base without a path prefix are
+  unaffected.
+
 ## [0.3.1]
 
 Documentation and metadata only — no code or behavior changes.

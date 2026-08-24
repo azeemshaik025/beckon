@@ -114,6 +114,13 @@ impl ApiClientExpander {
                     client: reqwest::Client,
                     timeout: impl Into<Option<std::time::Duration>>,
                 ) -> Self {
+                    let mut url = url;
+                    // Ensure the base ends in `/` so it's treated as a directory and any
+                    // path prefix (e.g. `/v1`) is preserved when endpoint paths are joined.
+                    if !url.path().ends_with('/') {
+                        let __p = format!("{}/", url.path());
+                        url.set_path(&__p);
+                    }
                     let timeout = timeout.into().unwrap_or(std::time::Duration::from_secs(5));
                     Self { url, client, timeout, #auth_inits }
                 }

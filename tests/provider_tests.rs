@@ -951,4 +951,111 @@ mod tests {
         assert_eq!(from_original.value, "cloned");
         Ok(())
     }
+
+    // --- Base-URL path-prefix tests ---
+
+    // A base URL with a path prefix (e.g. `/v1`) must be preserved, not clobbered by
+    // the endpoint path.
+    #[tokio::test]
+    async fn test_base_url_prefix_preserved() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/v1/users"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(create_success_response("v1")))
+            .mount(&mock_server)
+            .await;
+
+        let base = Url::from_str(&format!("{}/v1", mock_server.uri()))?;
+        let provider = HttpProvider::new(base, Duration::from_secs(5));
+        let result = provider.get_users().await?;
+
+        assert_eq!(result.value, "v1");
+        Ok(())
+    }
+
+    // Same, when the base already carries a trailing slash.
+    #[tokio::test]
+    async fn test_base_url_prefix_trailing_slash() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/v1/users"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(create_success_response("v1")))
+            .mount(&mock_server)
+            .await;
+
+        let base = Url::from_str(&format!("{}/v1/", mock_server.uri()))?;
+        let provider = HttpProvider::new(base, Duration::from_secs(5));
+        let result = provider.get_users().await?;
+
+        assert_eq!(result.value, "v1");
+        Ok(())
+    }
+
+    // The prefix must survive alongside path-param substitution.
+    #[tokio::test]
+    async fn test_base_url_prefix_with_path_params() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/v1/users/123"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(create_success_response("u123")))
+            .mount(&mock_server)
+            .await;
+
+        let base = Url::from_str(&format!("{}/v1", mock_server.uri()))?;
+        let provider = HttpProvider::new(base, Duration::from_secs(5));
+        let result = provider
+            .get_users_by_id(&PathParams {
+                id: "123".to_string(),
+            })
+            .await?;
+
+        assert_eq!(result.value, "u123");
+        Ok(())
+    }
+
+    // Prefix preserved and a `/` in a path param still stays inside its own segment.
+    #[tokio::test]
+    async fn test_base_url_prefix_preserves_param_encoding(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path_regex(r"^/v1/users/[^/]+$"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(create_success_response("enc")))
+            .mount(&mock_server)
+            .await;
+
+        let base = Url::from_str(&format!("{}/v1", mock_server.uri()))?;
+        let provider = HttpProvider::new(base, Duration::from_secs(5));
+        let result = provider
+            .get_users_by_id(&PathParams {
+                id: "1/2".to_string(),
+            })
+            .await?;
+
+        assert_eq!(result.value, "enc");
+        Ok(())
+    }
+
+    // Regression: a base with no path prefix behaves exactly as before.
+    #[tokio::test]
+    async fn test_no_base_prefix_unchanged() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::path("/users"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(create_success_response("root")))
+            .mount(&mock_server)
+            .await;
+
+        let provider =
+            HttpProvider::new(Url::from_str(&mock_server.uri())?, Duration::from_secs(5));
+        let result = provider.get_users().await?;
+
+        assert_eq!(result.value, "root");
+        Ok(())
+    }
 }
