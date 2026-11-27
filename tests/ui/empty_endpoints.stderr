@@ -1,0 +1,5 @@
+error: at least one endpoint must be defined
+ --> tests/ui/empty_endpoints.rs:3:9
+  |
+3 | beckon!(Api, {});
+  |         ^^^

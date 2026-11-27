@@ -1,0 +1,7 @@
+error[E0609]: no field `id` on type `&UserPath`
+  --> tests/ui/path_param_field_missing.rs:10:17
+   |
+10 |         { path: "/users/{id}", method: GET, path_params: UserPath, },
+   |                 ^^^^^^^^^^^^^ unknown field
+   |
+   = note: available field is: `user_id`

@@ -1,0 +1,5 @@
+error: path has a `{id}` placeholder but no `path_params`
+ --> tests/ui/placeholder_without_path_params.rs:6:17
+  |
+6 |         { path: "/users/{id}", method: GET, },
+  |                 ^^^^^^^^^^^^^
