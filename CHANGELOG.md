@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1]
+
+### Fixed
+
+- **A path placeholder without `path_params` is now a compile error.** `path: "/users/{id}"`
+  with no `path_params` used to compile and request `/users/%7Bid%7D`. It now fails with
+  "path has a `{id}` placeholder but no `path_params`", underlined on the path. Only
+  endpoints that were already sending the wrong URL stop compiling.
+- **Type errors point at your own tokens.** A `req` type without `Serialize`, or a
+  placeholder with no matching field on the `path_params` type, was reported on the whole
+  `beckon!` call. Both now underline the type or the path, and the missing field gets
+  rustc's "available field" hint. A `res` type without `Deserialize` gives one error
+  instead of two.
+
+### Added
+
+- Compile-fail tests (`trybuild`) that pin the exact error for eight kinds of bad input.
+  CI runs on a pinned Rust version, 1.100.0, because the recorded errors are rustc's exact
+  text.
+
 ## [0.4.0]
 
 ### Fixed
