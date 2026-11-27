@@ -23,5 +23,7 @@ help: the trait `for<'de> serde::de::Deserialize<'de>` is not implemented for `U
 note: required by a bound in `Response::json`
   --> $CARGO/reqwest-$VERSION/src/async_impl/response.rs
    |
+   | impl Response {
+...
    |     pub async fn json<T: DeserializeOwned>(self) -> crate::Result<T> {
    |                          ^^^^^^^^^^^^^^^^ required by this bound in `Response::json`
