@@ -1,0 +1,5 @@
+error: Unsupported HTTP method: FETCH
+ --> tests/ui/unsupported_method.rs:6:35
+  |
+6 |         { path: "/users", method: FETCH, },
+  |                                   ^^^^^

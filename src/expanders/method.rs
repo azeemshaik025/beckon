@@ -4,11 +4,11 @@ use crate::{
 };
 use heck::ToSnakeCase;
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
+use quote::{quote, quote_spanned};
 use regex::Regex;
-use syn::Ident;
+use syn::{spanned::Spanned, Ident};
 
-const PATH_PARAM_REGEX: &str = r"\{([a-zA-Z0-9_]+)\}";
+pub(crate) const PATH_PARAM_REGEX: &str = r"\{([a-zA-Z0-9_]+)\}";
 
 pub struct MethodExpander<'a> {
     def: &'a EndpointDef,
@@ -263,7 +263,9 @@ impl<'a> UrlExpander<'a> {
             .captures_iter(&path_str)
             .map(|cap| {
                 let param_name = &cap[1];
-                let ident = Ident::new(param_name, Span::call_site());
+                // Spanned on the path literal, so a placeholder with no matching field is
+                // reported there rather than on the whole macro call.
+                let ident = Ident::new(param_name, path.span());
                 quote! {
                     path = path.replace(
                         concat!("{", #param_name, "}"),
@@ -342,8 +344,9 @@ impl<'a> RequestExpander<'a> {
             None => {}
         }
 
-        if self.def.req.is_some() {
-            modifications.push(quote! { request = request.json(body); });
+        if let Some(ref req) = self.def.req {
+            // A `req` type without `Serialize` is reported at the type, not the macro call.
+            modifications.push(quote_spanned! {req.span()=> request = request.json(body); });
         }
         if self.def.query_params.is_some() {
             modifications.push(quote! { request = request.query(query_params); });
@@ -369,7 +372,7 @@ impl<'a> ResponseExpander<'a> {
     pub fn expand(&self) -> TokenStream {
         let error_name = self.error_name;
         match self.res {
-            Some(res) => quote! {
+            Some(res) => quote_spanned! {res.span()=>
                 response
                     .json::<#res>()
                     .await

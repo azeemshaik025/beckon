@@ -1,0 +1,5 @@
+error: missing `method`
+ --> tests/ui/missing_method.rs:6:27
+  |
+6 |         { path: "/users", },
+  |                           ^

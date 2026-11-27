@@ -1,0 +1,5 @@
+error: unexpected field
+ --> tests/ui/unknown_field.rs:6:27
+  |
+6 |         { path: "/users", methd: GET, },
+  |                           ^^^^^

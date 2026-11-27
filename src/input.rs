@@ -1,3 +1,5 @@
+use crate::expanders::method::PATH_PARAM_REGEX;
+use regex::Regex;
 use syn::{
     braced, parenthesized,
     parse::{Parse, ParseStream, Result},
@@ -215,7 +217,7 @@ impl Parse for EndpointDef {
         let content;
         braced!(content in input);
 
-        let mut path = None;
+        let mut path: Option<LitStr> = None;
         let mut method = None;
         let mut fn_name = None;
         let mut req = None;
@@ -248,6 +250,17 @@ impl Parse for EndpointDef {
 
             if content.peek(Token![,]) {
                 content.parse::<Token![,]>()?;
+            }
+        }
+
+        // Without `path_params` the placeholder would be sent literally, as `%7Bid%7D`.
+        if let (Some(path), None) = (&path, &path_params) {
+            let re = Regex::new(PATH_PARAM_REGEX).expect("Invalid regex");
+            if let Some(cap) = re.captures(&path.value()) {
+                return Err(syn::Error::new(
+                    path.span(),
+                    format!("path has a `{}` placeholder but no `path_params`", &cap[0]),
+                ));
             }
         }
 
